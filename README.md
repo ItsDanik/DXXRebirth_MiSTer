@@ -97,8 +97,8 @@ All of them can be changed in the game under *Options*, *Controls*.
 
 | Button | Action |
 |---|---|
-| Right stick, D-pad | Turn and pitch |
-| Left stick | Slide left / right and up / down |
+| Left stick, D-pad | Turn and pitch |
+| Right stick | Slide left / right and up / down |
 | R2 (RT / R2) | Fire primary weapon |
 | L2 (LT / L2) | Fire secondary weapon |
 | Y (Xbox X / PlayStation Square) | Fire flare |

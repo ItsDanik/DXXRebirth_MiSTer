@@ -129,8 +129,8 @@ Controls
     F1                          Help: all keys
     All of them can be changed in the game under Options, Controls.
   Gamepad (default mapping):
-    Right stick, D-pad                  Turn and pitch
-    Left stick                          Slide left / right and up / down
+    Left stick, D-pad                   Turn and pitch
+    Right stick                         Slide left / right and up / down
     R2 (RT)                             Fire primary weapon
     L2 (LT)                             Fire secondary weapon
     Y (Xbox X / PlayStation Square)     Fire flare
