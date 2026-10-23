@@ -1,0 +1,11 @@
+# Game data is copyrighted and never committed
+*.hog
+*.pig
+*.ham
+*.mvl
+*.s11
+*.s22
+
+# Build outputs
+/build/
+/dist/

@@ -1,0 +1,8 @@
+[submodule "hybrid"]
+	path = hybrid
+	url = https://github.com/ItsDanik/Hybrid_MiSTer.git
+	branch = main
+[submodule "dxxrebirth"]
+	path = dxxrebirth
+	url = https://github.com/ItsDanik/dxx-rebirth.git
+	branch = mister
