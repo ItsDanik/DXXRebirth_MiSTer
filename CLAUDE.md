@@ -36,6 +36,10 @@
 - The texture mapper stopped at `SWIDTH*SHEIGHT` pixels (a guard against writing past the screen), which cut the view at row 200: it is the frame's size now (`MiSTer_frame_pixels`). Sub-canvases take the font of their parent: `MiSTer_FrameCanvas()` copies the screen's, or the HUD has none (a crash).
 - Menu mask: bit 0 while in 320x200 (greys *HUD (Top)* / *HUD (Bottom)*), bit 1 in Descent (greys the cheats only Descent II has). `HUD_EDGES` is 2'b11.
 
+## Gamepad
+
+- Defaults since 2026-10-23 (Danik): right stick and d-pad turn and pitch, left stick slides, R2 / L2 analog thrust forward / back, Y / X fire, B / A accelerate / reverse, L / R cycle primary / secondary, Select rear view, Start the menu; Slide On has no button. `J1` (core) and `DefaultKeySettings` (kconfig.cpp) must agree. The game has one throttle axis, so `joy.cpp` sends the triggers as one on axis 4 (R2 negative, as a stick pushed up; axis 5 sends nothing), and the d-pad pushes the right stick (axes 2 / 3). A pilot whose joystick bindings are still the first defaults gets these when it is read (`kc_mister_update_joystick`); one the player changed is left alone.
+
 ## Music, cheats, rumble
 
 - The music is libADLMIDI's sequencer and HMI instrument banks, as on a PC, but played by the core (`mister_music.cpp`): `tools/libadlmidi-mister.patch` adds an emulator `ADLMIDI_EMU_HOOK_OPL2` (one OPL2, 9 voices) whose register writes go to a hook with the frame they are at, and the raw MIDI events hook. With the OSD's *Music* on MIDI (`MH_MidiWanted()`) the song's events go to the synthesizer or an MT32-pi (GM reset and the song's settings sent again on a switch, a new song or `MH_MidiSynthChanged()`, the song held while `MH_MidiBacklog()` goes out), else the OPL2 writes go to the core's FM chip (loaded again from a register shadow on a switch back). Without the core's chip (or the patched library) the software OPL3 plays it as upstream. FM volume 64 (twice the chip's own, as upstream mixes the software chip twice as loud): not yet compared by ear on the MiSTer.

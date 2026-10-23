@@ -129,16 +129,17 @@ Controls
     F1                          Help: all keys
     All of them can be changed in the game under Options, Controls.
   Gamepad (default mapping):
-    Left stick, D-pad                   Turn and pitch
-    Right stick                         Slide left / right and up / down
+    Right stick, D-pad                  Turn and pitch
+    Left stick                          Slide left / right and up / down
+    R2 (RT) / L2 (LT)                   Accelerate / reverse, as far as the
+                                        trigger is pressed
     Y (Xbox X / PlayStation Square)     Fire primary weapon
     X (Xbox Y / PlayStation Triangle)   Fire secondary weapon
     B (Xbox A / PlayStation Cross)      Accelerate
     A (Xbox B / PlayStation Circle)     Reverse
-    L (LB / L1)                         Slide: the left stick and the D-pad
-                                        slide while it is held
-    R (RB / R1)                         Next primary weapon
-    Select                              Next secondary weapon
+    L (LB / L1)                         Next primary weapon
+    R (RB / R1)                         Next secondary weapon
+    Select                              Rear view
     Start                               Game menu: automap, options, save,
                                         load, abort. Closes the automap and
                                         the menus too

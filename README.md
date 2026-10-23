@@ -97,15 +97,16 @@ All of them can be changed in the game under *Options*, *Controls*.
 
 | Button | Action |
 |---|---|
-| Left stick, D-pad | Turn and pitch |
-| Right stick | Slide left / right and up / down |
+| Right stick, D-pad | Turn and pitch |
+| Left stick | Slide left / right and up / down |
+| R2 (RT) / L2 (LT) | Accelerate / reverse, as far as the trigger is pressed |
 | Y (Xbox X / PlayStation Square) | Fire primary weapon |
 | X (Xbox Y / PlayStation Triangle) | Fire secondary weapon |
 | B (Xbox A / PlayStation Cross) | Accelerate |
 | A (Xbox B / PlayStation Circle) | Reverse |
-| L (LB / L1) | Slide: the left stick and the D-pad slide while it is held |
-| R (RB / R1) | Next primary weapon |
-| Select | Next secondary weapon |
+| L (LB / L1) | Next primary weapon |
+| R (RB / R1) | Next secondary weapon |
+| Select | Rear view |
 | Start | Game menu: automap, options, save, load, abort. Closes the automap and the menus too |
 
 In the game's menus the buttons that confirm and go back are the ones of your MiSTer menu, whatever they do in the game: its *Menu OK* / *Menu Back* if you set them in *Define joystick buttons*, else its A / B. A controller never set up in MiSTer confirms and goes back as on its console: Cross / Circle on PlayStation, A / B on Xbox and on Nintendo. They also skip a movie, as Start does.
