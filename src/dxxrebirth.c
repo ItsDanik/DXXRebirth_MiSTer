@@ -8,7 +8,10 @@
 // The data of both games is in the current folder (games/dnk/DXXRebirth/,
 // DATADIR of danik_hybrid_launch.sh); d1x-rebirth and d2x-rebirth are next
 // to this program. Their settings and saved games are where
-// D1X_REBIRTH_HOME and D2X_REBIRTH_HOME say.
+// D1X_REBIRTH_HOME and D2X_REBIRTH_HOME say (descent/ and descent2/ there).
+// The games look for their data in those folders first, as DXX-Rebirth does
+// in ~/.d1x-rebirth and ~/.d2x-rebirth, so a player who knows it may have
+// put it there: a game is there in either place.
 
 #include <limits.h>
 #include <stdio.h>
@@ -39,6 +42,33 @@ static const mh_game GAMES[] = {
 };
 #define NUM_GAMES (int)(sizeof(GAMES) / sizeof(GAMES[0]))
 
+// The folder of each game's settings, in the folder of the data
+static const char *const HOMES[NUM_GAMES] = { "descent", "descent2", "descent2" };
+#define MAX_FILES 16
+
+// games[i] with its files in its settings folder, where they are there and
+// not in the folder of the data
+static void find_at_home(mh_game *games, char paths[NUM_GAMES][MAX_FILES][32],
+                         const char *lists[NUM_GAMES][MAX_FILES + 1])
+{
+    mh_game at_home;
+    int i, j;
+
+    for (i = 0; i < NUM_GAMES; i++) {
+        if (MH_GameFound(&games[i], NULL))
+            continue;
+        for (j = 0; games[i].files[j] != NULL && j < MAX_FILES; j++) {
+            snprintf(paths[i][j], sizeof(paths[i][j]), "%s/%s", HOMES[i], games[i].files[j]);
+            lists[i][j] = paths[i][j];
+        }
+        lists[i][j] = NULL;
+        at_home = games[i];
+        at_home.files = lists[i];
+        if (MH_GameFound(&at_home, NULL))
+            games[i].files = lists[i];
+    }
+}
+
 static const char *const NO_GAME =
     "No game found. Copy all the files of your Descent (descent.hog, descent.pig) or "
     "Descent II (descent2.hog, .ham, .s11, .s22, six .pig files) into %s.";
@@ -46,6 +76,9 @@ static const char *const NO_GAME =
 int main(int argc, char **argv)
 {
     static const char *const programs[NUM_GAMES] = { "d1x-rebirth", "d2x-rebirth", "d2x-rebirth" };
+    static char paths[NUM_GAMES][MAX_FILES][32];
+    static const char *lists[NUM_GAMES][MAX_FILES + 1];
+    mh_game games[NUM_GAMES];
     char program[PATH_MAX + 32], data[PATH_MAX];
     struct stat st;
     char *slash;
@@ -58,7 +91,9 @@ int main(int argc, char **argv)
     }
     // the game's logo and the lines under it ("Loading <name>..." the last)
     // come with the pick
-    pick = MH_PickGame(GAMES, NUM_GAMES, NULL, NO_GAME, &listed);
+    memcpy(games, GAMES, sizeof(games));
+    find_at_home(games, paths, lists);
+    pick = MH_PickGame(games, NUM_GAMES, NULL, NO_GAME, &listed);
     if (pick < 0) {
         MH_Close();
         return EXIT_TO_MENU;
