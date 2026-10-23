@@ -38,7 +38,7 @@
 
 ## Gamepad
 
-- Defaults since 2026-10-23 (Danik): right stick and d-pad turn and pitch, left stick slides, R2 / L2 analog thrust forward / back, Y / X fire, B / A accelerate / reverse, L / R cycle primary / secondary, Select rear view, Start the menu; Slide On has no button. `J1` (core) and `DefaultKeySettings` (kconfig.cpp) must agree. The game has one throttle axis, so `joy.cpp` sends the triggers as one on axis 4 (R2 negative, as a stick pushed up; axis 5 sends nothing), and the d-pad pushes the right stick (axes 2 / 3). A pilot whose joystick bindings are still the first defaults gets these when it is read (`kc_mister_update_joystick`); one the player changed is left alone.
+- Defaults since 2026-10-23 (Danik): right stick and d-pad turn and pitch, left stick slides, R2 / L2 fire primary / secondary, Y / X flare / bomb, B / A accelerate / reverse, L / R cycle primary / secondary, Select rear view, Start the menu; Slide On has no button. `J1` (core) and `DefaultKeySettings` (kconfig.cpp) must agree. The triggers are bound as the axis buttons of axes 4 and 5 (`DXX_MISTER_AXIS_BUTTON`: joystick 1's 32 buttons and its hat come first), pressed past 30%. The d-pad pushes the right stick (axes 2 / 3), except in a direction the left stick is pushed in: Main_MiSTer presses the d-pad too when the left stick is pushed far, which turned the ship while it slid (as in CrispyDoom). A test build that day had the triggers as an analog throttle (one axis of both, R2 forward): Danik preferred firing on them. A pilot whose joystick bindings are still the first defaults, or that test build's, gets the current ones when it is read (`kc_mister_update_joystick`); one the player changed is left alone.
 
 ## Music, cheats, rumble
 

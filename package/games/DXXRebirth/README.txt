@@ -131,10 +131,10 @@ Controls
   Gamepad (default mapping):
     Right stick, D-pad                  Turn and pitch
     Left stick                          Slide left / right and up / down
-    R2 (RT) / L2 (LT)                   Accelerate / reverse, as far as the
-                                        trigger is pressed
-    Y (Xbox X / PlayStation Square)     Fire primary weapon
-    X (Xbox Y / PlayStation Triangle)   Fire secondary weapon
+    R2 (RT)                             Fire primary weapon
+    L2 (LT)                             Fire secondary weapon
+    Y (Xbox X / PlayStation Square)     Fire flare
+    X (Xbox Y / PlayStation Triangle)   Drop bomb
     B (Xbox A / PlayStation Cross)      Accelerate
     A (Xbox B / PlayStation Circle)     Reverse
     L (LB / L1)                         Next primary weapon

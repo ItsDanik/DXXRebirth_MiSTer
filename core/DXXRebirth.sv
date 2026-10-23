@@ -139,7 +139,7 @@ localparam CONF_STR = {
 	// game knows this list as buttons 0..9
 	// of the SDL joystick, the launcher repeats "jn" as MISTER_HYBRID_JN
 	// (package/games/DXXRebirth/danik_hybrid_launch.sh).
-	"J1,Fire Primary,Fire Secondary,Accelerate,Reverse,Cycle Primary,Cycle Secondary,Rear View,Menu,Menu OK,Menu Back;",
+	"J1,Fire Flare,Drop Bomb,Accelerate,Reverse,Cycle Primary,Cycle Secondary,Rear View,Menu,Menu OK,Menu Back;",
 	"jn,Y,X,B,A,L,R,Select,Start;",
 	// Main_MiSTer's info box shows text n when hybrid_host asks for it
 	// (`info`): 1..13 the MT32-pi's synth, 14..16 the SoundFont's errors
