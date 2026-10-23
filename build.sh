@@ -47,7 +47,12 @@ tc sh -c "
     use_tracker=0 ipv6=0 screenshot=none verbosebuild=0 $* ../build/$TARGET &&
   cd .. &&
   ${CROSS}gcc -O2 $ARCH -Wall -Ihybrid/hps -o build/$TARGET/DXXRebirth src/dxxrebirth.c \
-    hybrid/hps/mister_hybrid.c hybrid/hps/mister_ui.c hybrid/hps/mister_joymap.c -lpthread"
+    hybrid/hps/*.c -lpthread -lm"
 cp "$PREFIX/lib/libADLMIDI.so" "build/$TARGET/libADLMIDI.so"
+# The launch script's messages on the core's picture (hybrid/tools/mh_message.c)
+if [ "$TARGET" = mister ]; then
+    hybrid/docker.sh arm-linux-gnueabihf-gcc -O2 -static -Ihybrid/hps -o build/mister/mh_message \
+        hybrid/tools/mh_message.c hybrid/hps/*.c -lpthread -lm
+fi
 ls -la "build/$TARGET/d1x-rebirth/d1x-rebirth" "build/$TARGET/d2x-rebirth/d2x-rebirth" \
     "build/$TARGET/DXXRebirth" "build/$TARGET/libADLMIDI.so"

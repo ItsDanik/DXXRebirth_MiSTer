@@ -2,7 +2,10 @@
 # Build the libraries DXX-Rebirth needs besides the SDL2 of hybrid/sdl2: PhysFS
 # and SDL2_image (PCX only, for the title and menu screens) as static
 # libraries, and libADLMIDI (the music: MIDI played by an emulated OPL3, as a
-# Sound Blaster did) as the shared library the game loads at run time.
+# Sound Blaster did) as the shared library the game loads at run time, with
+# tools/libadlmidi-mister.patch: an OPL2 whose register writes go to the
+# game (ADLMIDI_EMU_HOOK_OPL2, adl_setChipWriteHook()), which sends them to
+# the core's FM chip.
 # Runs inside the toolchain container (see build.sh), after hybrid/sdl2/build.sh.
 # usage: deps.sh <mister|host> <work directory>
 #   libraries and headers end up in <work directory>/<target>/prefix
@@ -26,9 +29,13 @@ fetch $IMAGE.tar.gz https://github.com/libsdl-org/SDL_image/releases/download/re
     2213b56fdaff2220d0e38c8e420cbe1a83c87374190cba8c70af2156097ce30a
 fetch $ADLMIDI.tar.gz https://github.com/Wohlstand/libADLMIDI/archive/refs/tags/v1.6.2.1.tar.gz \
     e01aec7b2bc284476eedab77a8b6e177c5beda2bc2f4545166339badfc0464c5
-for p in $PHYSFS $IMAGE $ADLMIDI; do
+for p in $PHYSFS $IMAGE; do
     [ -d "$WORK/src/$p" ] || tar -xzf "$WORK/dl/$p.tar.gz" -C "$WORK/src"
 done
+# fresh every time, so that the patch is the one applied
+rm -rf "$WORK/src/$ADLMIDI"
+tar -xzf "$WORK/dl/$ADLMIDI.tar.gz" -C "$WORK/src"
+(cd "$WORK/src/$ADLMIDI" && GIT_DIR=/nonexistent git apply -p2 "$ROOT/tools/libadlmidi-mister.patch")
 
 PREFIX=$WORK/$TARGET/prefix
 COMMON="-DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$PREFIX -DCMAKE_PREFIX_PATH=$PREFIX -DCMAKE_INSTALL_LIBDIR=lib -DBUILD_SHARED_LIBS=OFF -DCMAKE_POSITION_INDEPENDENT_CODE=OFF -DCMAKE_POLICY_VERSION_MINIMUM=3.5"
@@ -58,7 +65,8 @@ cmake -S "$WORK/src/$IMAGE" -B "$WORK/$TARGET/$IMAGE" $COMMON \
 cmake --build "$WORK/$TARGET/$IMAGE" -j"$JOBS" >> "$WORK/$TARGET/$IMAGE.log" 2>&1
 cmake --install "$WORK/$TARGET/$IMAGE" >> "$WORK/$TARGET/$IMAGE.log"
 
-# Only the DOSBox OPL3 emulator: the others are too slow for the MiSTer's ARM.
+# Only the DOSBox OPL3 emulator (and the hook OPL2 with it): the others are
+# too slow for the MiSTer's ARM.
 # The C++ runtime is linked in, as in the game.
 cmake -S "$WORK/src/$ADLMIDI" -B "$WORK/$TARGET/$ADLMIDI" $COMMON \
     -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DCMAKE_SHARED_LINKER_FLAGS="-static-libstdc++ -static-libgcc" \

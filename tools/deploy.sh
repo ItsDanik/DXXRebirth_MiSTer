@@ -1,23 +1,29 @@
 #!/bin/sh
-# Package the build and copy it to a MiSTer over ssh.
+# Package the build and copy it to a MiSTer over ssh, in the layout of the
+# hybrid ports. The core is not (re)loaded: load a game of DXXRebirth from the
+# Other menu afterwards. Run Scripts/danik_hybrid_ports.sh on the MiSTer
+# once to set up the launcher. A MiSTer that has DXXRebirth in the old layout
+# (games/DXXRebirth/) gets it moved by the launcher (version 3) once this is
+# there.
 # usage: MISTER=root@<address> tools/deploy.sh
-# The core is not (re)loaded: load DXXRebirth from the menu afterwards. Run
-# /media/fat/Scripts/danik_hybrid_cores.sh on the MiSTer once to set up the launcher.
 set -e
 cd "$(dirname "$0")/.."
 HOST=${MISTER:?set MISTER=root@<address of the MiSTer>}
 ./package.sh > /dev/null
 OUT=dist/DXXRebirth_$(date +%Y%m%d)
-G=/media/fat/games/DXXRebirth
-ssh "$HOST" "mkdir -p $G && rm -f /media/fat/_Other/DXXRebirth_*.rbf"
+G=/media/fat/games/dnk/DXXRebirth
+ssh "$HOST" "mkdir -p $G /media/fat/_Other/dnk /media/fat/Scripts/.danik_hybrid_ports && rm -f /media/fat/_Other/dnk/dnk-DXXRebirth_*.rbf"
 # a running game keeps its binaries busy: copy next to them, then swap
+# (scp would copy into a folder of that name, if something left one behind)
+# GAME: the list of games, the two games and the music library
 for f in DXXRebirth d1x-rebirth d2x-rebirth libADLMIDI.so; do
-    scp -q "$OUT/games/DXXRebirth/$f" "$HOST:$G/$f.new"
+    ssh "$HOST" "rm -rf $G/$f.new"
+    scp -q "$OUT/games/dnk/DXXRebirth/$f" "$HOST:$G/$f.new"
     ssh "$HOST" "mv -f $G/$f.new $G/$f"
 done
 # everything else of the package (user files on the MiSTer are left alone)
-(cd "$OUT/games/DXXRebirth" && tar cf - --exclude=./DXXRebirth --exclude=./d1x-rebirth --exclude=./d2x-rebirth --exclude=./libADLMIDI.so .) |
-    ssh "$HOST" "tar xf - --no-same-owner -C $G"
-scp -q "$OUT/Scripts/danik_hybrid_cores.sh" "$HOST:/media/fat/Scripts/"
-scp -q "$OUT"/_Other/*.rbf "$HOST:/media/fat/_Other/"
-ssh "$HOST" "chmod +x $G/DXXRebirth $G/d1x-rebirth $G/d2x-rebirth $G/*.sh /media/fat/Scripts/danik_hybrid_cores.sh; ls -la $G /media/fat/_Other/DXXRebirth_*.rbf"
+(cd "$OUT/games/dnk/DXXRebirth" && tar cf - --exclude=./DXXRebirth --exclude=./d1x-rebirth --exclude=./d2x-rebirth \
+    --exclude=./libADLMIDI.so .) | ssh "$HOST" "tar xf - --no-same-owner -C $G"
+(cd "$OUT/Scripts" && tar cf - .) | ssh "$HOST" "tar xf - --no-same-owner -C /media/fat/Scripts"
+(cd "$OUT/_Other" && tar cf - .) | ssh "$HOST" "tar xf - --no-same-owner -C /media/fat/_Other"
+ssh "$HOST" "chmod +x $G/DXXRebirth $G/d1x-rebirth $G/d2x-rebirth $G/*.sh /media/fat/Scripts/danik_hybrid_ports.sh; ls -la $G /media/fat/_Other/dnk/dnk-DXXRebirth_*.rbf /media/fat/_Other/dnk-*.mgl"

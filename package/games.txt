@@ -1,0 +1,10 @@
+# The games of this core, a line each: <id>|<title> (hybrid/README.md,
+# "Several games in one core"). Each is a menu entry, _Other/dnk-<title>.mgl;
+# with several, its set name is DXXRebirth_<id> (short: 31 characters at most in
+# all). The zip has these lines as games/dnk/DXXRebirth/games.txt, from which the
+# database makes the launcher's catalogue (hybrid/launcher/distribution.py).
+# The shareware of Descent has the full game's file names (it is the d1
+# entry's too), the demo of Descent II has an entry of neither (its full
+# game's starts it): src/dxxrebirth.c
+d1|Descent
+d2|Descent II

@@ -22,13 +22,11 @@ module emu
 ///////// Default values for ports not used in this core /////////
 
 assign ADC_BUS  = 'Z;
-assign USER_OUT = '1;
 assign {UART_RTS, UART_TXD, UART_DTR} = 0;
 assign {SD_SCK, SD_MOSI, SD_CS} = 'Z;
 assign {SDRAM_DQ, SDRAM_A, SDRAM_BA, SDRAM_CLK, SDRAM_CKE, SDRAM_DQML, SDRAM_DQMH, SDRAM_nWE, SDRAM_nCAS, SDRAM_nRAS, SDRAM_nCS} = 'Z;
 
 assign VGA_SCALER  = 0;
-assign VGA_DISABLE = 0;
 assign HDMI_FREEZE = 0;
 assign HDMI_BLACKOUT = 0;
 assign HDMI_BOB_DEINT = 0;
@@ -43,7 +41,7 @@ assign BUTTONS = 0;
 
 //////////////////////////////////////////////////////////////////
 
-// Status bits [63:0] are forwarded to the HPS side. Bits [23:0] mean the same
+// Status bits [127:0] are forwarded to the HPS side. Bits [23:0] mean the same
 // in every hybrid core (MH_OSD_* in hybrid/hps/mister_hybrid.h), game options
 // start at bit 24 (decoded in the game's MiSTer source file). Defaults are 0.
 // The order of the options is the one in hybrid/README.md, "OSD".
@@ -54,28 +52,133 @@ localparam CONF_STR = {
 	"O[122:121],Aspect ratio,Original,Full Screen,[ARC1],[ARC2];",
 	"O[125:123],Scale,Normal,V-Integer,Narrower HV-Integer,Wider HV-Integer,HV-Integer;",
 	"O[4:2],Scandoubler Fx,None,HQ2x,CRT 25%,CRT 50%,CRT 75%;",
+	// Not with direct_video (the HDMI output is the analog one then), and
+	// the CRT options not with forced_scandoubler: a VGA monitor has its own
+	// bit 1: bit 0 is the reset Main_MiSTer holds while it loads the core and
+	// clears after, so an option there was never kept (up to host version 12)
+	"H5O[1],HDMI Only,No,Yes;",
+	"H4P1,CRT Options;",
+	"P1-;",
+	// Horizontal Size: entries 0..7 are 0..+7, entries 8..31 are -24..-1
+	"P1O[68:64],Horizontal Size,0,+1,+2,+3,+4,+5,+6,+7,-24,-23,-22,-21,-20,-19,-18,-17,-16,-15,-14,-13,-12,-11,-10,-9,-8,-7,-6,-5,-4,-3,-2,-1;",
+	"P1O[72:69],Horizontal Pos,0,+1,+2,+3,+4,+5,+6,+7,-8,-7,-6,-5,-4,-3,-2,-1;",
+	"P1O[76:73],Vertical Pos,0,+1,+2,+3,+4,+5,+6,+7,-8,-7,-6,-5,-4,-3,-2,-1;",
+	// GAME: the HUD margins (MH_HudMargins(), hybrid/README.md "HUD
+	// margins"): pixels between the HUD and the top / bottom edge of a
+	// 240-line screen, 0 the default (host version 16; up to 15 entry 0 was
+	// 10). Both lines in a game with a HUD, the line of an edge it has none
+	// at greyed out (HUD_EDGES below: menu mask bits 7 and 8); neither, nor
+	// the "P1-;", in a game without a HUD. The game greys them out in its
+	// 200-line modes with a "D" of its own in front (MH_SetMenuMask()).
+	"P1-;",
+	"D0D7P1O[81:77],HUD (Top),0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24;",
+	"D0D8P1O[86:82],HUD (Bottom),0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24;",
 	"O[6:5],Stereo Mix,None,25%,50%,100%;",
+	// drawn by the hybrid library over the game's frames (MH_OSD_FPS)
+	"O[15],FPS Counter,Off,On;",
 	"-;",
+	// A game can hide or grey out lines with MH_SetMenuMask(): "H0".."H3" and
+	// "D0".."D3" in front of a line (hidden / greyed while the bit is set,
+	// "h" and "d" while it is not).
+	// Sound Volume / Music Volume (bits 10:7 and 14:11) go here if the game
+	// mixes them separately, then the game's own options from bit 24 up,
+	// followed by "-;". The first entry of an option is its default.
+	// Bits 16..23 were Menu OK / Menu Back up to host version 13 (a saved
+	// setting may still have them set): 16 is Save Diagnostic Report's since
+	// host version 16 (a trigger, which the core flips), 17..23 unused.
+	// GAME: in a core whose games play MIDI music (MH_MidiWanted(),
+	// hybrid/README.md "MIDI and the MT32-pi"), these lines after the game's
+	// music option, and MIDI_SYNTH 1 below; a core without leaves them out
+	// and sets it to 0.
+	// Music and SoundFont (host version 16): MIDI music or the FM chip's, and
+	// the synthesizer's SoundFont (Default: GeneralUser GS, 1..7 a player's
+	// own .sf2, docs/midi_synth.md). With Music on MIDI an MT32-pi plays it
+	// when one is connected and on, the core's synthesizer otherwise. The
+	// MT32-pi's lines are shown only while one is connected (menu mask bit 6).
 	"O[10:7],Sound Volume,100%,90%,80%,70%,60%,50%,40%,30%,20%,10%,0%;",
 	"O[14:11],Music Volume,100%,90%,80%,70%,60%,50%,40%,30%,20%,10%,0%;",
+	// GAME: 320x240 draws the game's view in all 240 lines, its HUD at the
+	// HUD margins of CRT Options (greyed out in 320x200: menu mask bit 0)
+	"O[24],Resolution,320x200,320x240;",
+	"O[87],Music,MIDI,FM chip;",
+	"O[90:88],SoundFont,Default,1,2,3,4,5,6,7;",
+	"h6O[96],MT32-pi,On,Off;",
+	"h6O[97],MT32-pi Synth,SoundFont,MT-32;",
+	"h6O[99:98],MT32-pi ROM,MT-32 v1,MT-32 v2,CM-32L;",
+	"h6O[103:100],MT32-pi SoundFont,Pi's own,0,1,2,3,4,5,6,7;",
+	"h6T[104],Reset Hanging Notes;",
+	"O[25],Rumble,On,Off;",
+	// GAME: the cheats, for both games; D1: Descent II's own, greyed out
+	// while Descent runs. The triggers flip their bit (MH_OSDTriggers()).
+	"P2,Cheats;",
+	"P2-;",
+	"P2O[26],Invulnerability,Off,On;",
+	"P2O[27],Robots Don't Fire,Off,On;",
+	"P2O[28],Rapid Fire,Off,On;",
+	"P2O[29],Ghost (No Clipping),Off,On;",
+	"P2O[30],Turbo,Off,On;",
+	"D1P2O[31],Homing Weapons,Off,On;",
+	"D1P2O[32],Bouncy Weapons,Off,On;",
+	"D1P2O[33],Robots Kill Robots,Off,On;",
+	"P2-;",
+	"P2T[56],Give All;",
+	"P2T[57],Kill Reactor;",
+	"P2T[58],Next Level;",
+	"P2T[59],Exit Path;",
+	// The last line of every core's menu (host version 16, docs/diagnostics.md):
+	// the library saves a report of the setup and the last 60 seconds in
+	// games/dnk/diagnostics/ (bit 16, flipped by hybrid_host at each pulse)
 	"-;",
-	"O[19:16],Menu OK,MiSTer,A,B,X,Y,L,R,Select,Start;",
-	"O[23:20],Menu Back,MiSTer,A,B,X,Y,L,R,Select,Start;",
-	"-;",
+	"T[16],Save Diagnostic Report;",
 	// MiSTer's default map only knows the SNES-style pad. Main refuses to map a
 	// button twice, so Menu OK/Back here are for spare buttons without a game
-	// function and unmapped by default; the OSD Menu OK/Back options cover
-	// buttons that have one. J1 has the game's eight most important actions,
-	// the last one opens the game's menu; jn gives each of them a button of the
-	// default pad, Start for the menu. The game knows this list as buttons 0..9
+	// function and unmapped by default; menus also confirm and go back with
+	// the MiSTer menu's own OK / Back (MH_MenuButtons()). J1 has the game's
+	// eight most important actions, the last one opens the game's menu; jn
+	// gives each of them a button of the default pad, Start for the menu. The
+	// game knows this list as buttons 0..9
 	// of the SDL joystick, the launcher repeats "jn" as MISTER_HYBRID_JN
 	// (package/games/DXXRebirth/danik_hybrid_launch.sh).
 	"J1,Fire Primary,Fire Secondary,Accelerate,Reverse,Slide,Cycle Primary,Cycle Secondary,Menu,Menu OK,Menu Back;",
 	"jn,Y,X,B,A,L,R,Select,Start;",
+	// Main_MiSTer's info box shows text n when hybrid_host asks for it
+	// (`info`): 1..13 the MT32-pi's synth, 14..16 the SoundFont's errors
+	// (MH_INFO_*), 17 and 18 the diagnostic report's, then empty ones up to
+	// 23; a game's own texts follow from 24. In every core (the report's
+	// texts; the MIDI ones are not asked for in a core without MIDI).
+	// It stays after the last line of the OSD's main page: Main_MiSTer's
+	// Enter counts it as a line of the page, its drawing does not, so every
+	// line below it would run the one above (Cheats nothing, the report
+	// Cheats; found 2026-10-21).
+	"I,MT32-pi: SoundFont 0,MT32-pi: SoundFont 1,MT32-pi: SoundFont 2,MT32-pi: SoundFont 3,",
+	"MT32-pi: SoundFont 4,MT32-pi: SoundFont 5,MT32-pi: SoundFont 6,MT32-pi: SoundFont 7,",
+	"MT32-pi: MT-32 v1,MT32-pi: MT-32 v2,MT32-pi: CM-32L,MT32-pi: unknown synth,",
+	"MT32-pi: SoundFont 8 or later,",
+	"No SoundFont found\nFM music instead\nCopy GeneralUser-GS.sf2 to\ngames/dnk/SoundFonts/,",
+	"The SoundFont is damaged\nor no SoundFont 2 file\nFM music instead,",
+	"The SoundFont is too big\n(over 64 MB)\nFM music instead,",
+	"Diagnostic report saved\nin games/dnk/diagnostics/,",
+	"Diagnostic report not saved\n(no space or the folder\ncannot be written),,,,,;",
 	"V,v",`BUILD_DATE
 };
 
+// GAME: the edges the game has a HUD at, bit 0 the top, bit 1 the bottom: the
+// other's HUD line is greyed out (menu mask bits 7 and 8)
+localparam [1:0] HUD_EDGES = 2'b11;
+
+// GAME: 1 in a core whose games play MIDI music (with the Music and SoundFont
+// lines above): the MIDI synthesizer in the FPGA (host version 16, about
+// 9,500 ALMs, 316 M10K and 20 DSP blocks, on a 100MHz clock of its own). 0
+// leaves it out: the MIDI music goes to an MT32-pi, or the game plays its FM
+// music, as with a core of host version 15.
+localparam MIDI_SYNTH = 1;
+
 wire         forced_scandoubler;
+wire         direct_video;
+wire   [3:0] menumask;
+wire         mt32_on;
+wire         info_req;
+wire   [7:0] info;
 wire   [1:0] buttons;
 wire [127:0] status;
 wire  [10:0] ps2_key;
@@ -93,10 +196,15 @@ hps_io #(.CONF_STR(CONF_STR)) hps_io
 	.gamma_bus(gamma_bus),
 
 	.forced_scandoubler(forced_scandoubler),
+	.direct_video(direct_video),
 
 	.buttons(buttons),
 	.status(status),
-	.status_menumask(16'd0),
+	// bit 6: an MT32-pi is connected ("h6": its lines); 7 and 8: no HUD at
+	// the top / the bottom ("D7", "D8": its line greyed out)
+	.status_menumask({7'd0, ~HUD_EDGES[1], ~HUD_EDGES[0], mt32_on, direct_video, forced_scandoubler, menumask}),
+	.info_req(info_req),
+	.info(info),
 
 	.joystick_0(joystick_0),
 	.joystick_1(joystick_1),
@@ -124,14 +232,32 @@ wire reset = RESET | buttons[1];
 
 //////////////////////////////////////////////////////////////////
 
+// The video modes of 640x400 and 640x480 have two forms (hybrid_host.sv):
+// interlaced at 15kHz for a 15kHz screen, progressive at 31kHz for
+// everything else, the core's own picture without a game as well. A 15kHz
+// screen must never get the second, so it takes the player to say that none
+// is there: forced_scandoubler=1 in MiSTer.ini (the analog output is a VGA
+// monitor) or the option "HDMI Only", with which the analog output is
+// switched off for as long as such a signal is on it. Modes of 15kHz still
+// go to the analog output with "HDMI Only", and so does the OSD over them.
+// With direct_video the HDMI output feeds an analog screen: no "HDMI Only".
+wire       hdmi_only = status[1] & ~direct_video;
+wire       vga31 = forced_scandoubler | hdmi_only;
+
+wire       clk_vid;
 wire       ce_pix;
 wire [7:0] r, g, b;
 wire       hsync, vsync, hblank, vblank;
+wire       hires, fast, f1;
 
-hybrid_host host
+// `fast` follows vga31, and falls only after the output has gone quiet
+assign VGA_DISABLE = fast & ~forced_scandoubler;
+
+hybrid_host #(.MIDI_SYNTH(MIDI_SYNTH)) host
 (
 	.clk(clk_sys),
 	.reset(reset),
+	.refclk(CLK_50M),
 
 	.ddr_busy(DDRAM_BUSY),
 	.ddr_burstcnt(DDRAM_BURSTCNT),
@@ -149,11 +275,13 @@ hybrid_host host
 	.joy_r_analog_0(joy_r_analog_0),
 	.joy_l_analog_1(joy_l_analog_1),
 	.joy_r_analog_1(joy_r_analog_1),
-	.osd_status(status[63:0]),
+	.osd_status(status),
+	.osd_open(OSD_STATUS),
 	.ps2_key(ps2_key),
 	.ps2_mouse(ps2_mouse),
 	.ps2_mouse_ext(ps2_mouse_ext),
 
+	.clk_vid(clk_vid),
 	.ce_pix(ce_pix),
 	.r(r),
 	.g(g),
@@ -162,30 +290,49 @@ hybrid_host host
 	.vsync(vsync),
 	.hblank(hblank),
 	.vblank(vblank),
+	.vga31(vga31),
+	// CRT options: for 15kHz screens
+	.crt_hsize(forced_scandoubler ? 6'd0 : {|status[68:67], status[68:64]}),
+	.crt_hpos(forced_scandoubler ? 4'd0 : status[72:69]),
+	.crt_vpos(forced_scandoubler ? 4'd0 : status[76:73]),
+	.hires(hires),
+	.fast(fast),
+	.f1(f1),
+	.menumask(menumask),
 
 	.audio_l(AUDIO_L),
-	.audio_r(AUDIO_R)
+	.audio_r(AUDIO_R),
+
+	// an MT32-pi on the user port (MIDI music, host version 15)
+	.clk_audio(CLK_AUDIO),
+	.user_in(USER_IN),
+	.user_out(USER_OUT),
+	.mt32_on(mt32_on),
+	.info_req(info_req),
+	.info(info)
 );
 
 assign DDRAM_CLK = clk_sys;
 
 //////////////////////////////////////////////////////////////////
-// Video output. The native signal is 15kHz, in the video mode the game set
-// (320x200 unless it asks hybrid_host for another, which is why the line
-// buffer below has room for the widest one); video_mixer scandoubles it
-// for VGA monitors (forced_scandoubler) or when a scandoubler effect is
-// selected. Analog output is untouched otherwise so CRTs get the real
-// 15kHz signal. HDMI goes through the framework's scaler; video_freak
-// gives it the aspect ratio and the integer scaling modes.
+// Video output, on hybrid_host's video clock. The native signal is 15kHz, in
+// the video mode the game set (320x200 unless it asks hybrid_host for
+// another); video_mixer scandoubles it for VGA monitors (forced_scandoubler)
+// or when a scandoubler effect is selected, which is why its line buffer has
+// room for the 640 pixels of the widest 15kHz mode. Analog output is
+// untouched otherwise so CRTs get the real 15kHz signal. HDMI goes through
+// the framework's scaler; video_freak gives it the aspect ratio and the
+// integer scaling modes. The modes of 640x400 and above are not scandoubled
+// (hires): interlaced, the scaler weaves the two fields (VGA_F1).
 
 wire [1:0] ar = status[122:121];
 wire [2:0] scale = status[4:2];
 wire [2:0] sl = scale ? scale - 1'd1 : 3'd0;
 wire       vga_de;
 
-assign CLK_VIDEO = clk_sys;
+assign CLK_VIDEO = clk_vid;
 assign VGA_SL = sl[1:0];
-assign VGA_F1 = 0;
+assign VGA_F1 = f1;
 
 video_mixer #(.LINE_LENGTH(640), .HALF_DEPTH(0), .GAMMA(1)) video_mixer
 (
@@ -193,7 +340,7 @@ video_mixer #(.LINE_LENGTH(640), .HALF_DEPTH(0), .GAMMA(1)) video_mixer
 	.CE_PIXEL(CE_PIXEL),
 	.ce_pix(ce_pix),
 
-	.scandoubler(scale || forced_scandoubler),
+	.scandoubler(~hires & (scale || forced_scandoubler)),
 	.hq2x(scale == 1),
 	.gamma_bus(gamma_bus),
 

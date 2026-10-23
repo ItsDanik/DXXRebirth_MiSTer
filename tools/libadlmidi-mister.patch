@@ -1,0 +1,240 @@
+diff -ruN a/libADLMIDI-1.6.2.1/CMakeLists.txt b/libADLMIDI-1.6.2.1/CMakeLists.txt
+--- a/libADLMIDI-1.6.2.1/CMakeLists.txt
++++ b/libADLMIDI-1.6.2.1/CMakeLists.txt
+@@ -354,6 +354,8 @@
+             set(HAS_EMULATOR TRUE)
+             target_sources(${targetLib} PRIVATE
+                 ${libADLMIDI_SOURCE_DIR}/src/chips/dosbox_opl2.cpp
++                ${libADLMIDI_SOURCE_DIR}/src/chips/hook_opl2.cpp
++                ${libADLMIDI_SOURCE_DIR}/src/chips/hook_opl2.h
+                 ${libADLMIDI_SOURCE_DIR}/src/chips/dosbox_opl2.h
+                 ${libADLMIDI_SOURCE_DIR}/src/chips/dosbox_opl3.h
+                 ${libADLMIDI_SOURCE_DIR}/src/chips/dosbox_opl3.cpp
+diff -ruN a/libADLMIDI-1.6.2.1/include/adlmidi.h b/libADLMIDI-1.6.2.1/include/adlmidi.h
+--- a/libADLMIDI-1.6.2.1/include/adlmidi.h
++++ b/libADLMIDI-1.6.2.1/include/adlmidi.h
+@@ -802,6 +802,8 @@
+     ADLMIDI_EMU_NUKED_CQM,
+     /*! DosBox ran in OPL2 mode */
+     ADLMIDI_EMU_DOSBOX_OPL2,
++    /*! No emulator: an OPL2 whose writes go to adl_setChipWriteHook()'s hook */
++    ADLMIDI_EMU_HOOK_OPL2,
+     /*! Count instrument on the level */
+     ADLMIDI_EMU_end,
+ 
+@@ -1539,6 +1541,29 @@
+  * @param pressure Velocity level, or -1 when it's note off event
+  * @param bend Pitch bend offset value
+  */
++/**
++ * @brief Register write callback of ADLMIDI_EMU_HOOK_OPL2
++ * @param userdata Pointer to user data
++ * @param reg Register of the OPL2, 0x00..0xFF
++ * @param value Its new value
++ * @param frame Output frames made since the library was loaded, when the write is made
++ */
++typedef void (*ADL_ChipWriteHook)(void *userdata, int reg, int value, unsigned long frame);
++
++/**
++ * @brief Set the hook ADLMIDI_EMU_HOOK_OPL2 sends its register writes to
++ * (one for the library: the emulator makes silence, a real chip plays)
++ * @param chipWriteHook Callback, or NULL for none
++ * @param userData Pointer to user data passed to it
++ */
++extern ADLMIDI_DECLSPEC void adl_setChipWriteHook(ADL_ChipWriteHook chipWriteHook, void *userData);
++
++/**
++ * @brief Output frames ADLMIDI_EMU_HOOK_OPL2 has made since the library was loaded
++ * (the frame of a write made now)
++ */
++extern ADLMIDI_DECLSPEC unsigned long adl_chipFrame(void);
++
+ typedef void (*ADL_NoteHook)(void *userdata, int adlchn, int note, int ins, int pressure, double bend);
+ 
+ /**
+diff -ruN a/libADLMIDI-1.6.2.1/src/adlmidi.cpp b/libADLMIDI-1.6.2.1/src/adlmidi.cpp
+--- a/libADLMIDI-1.6.2.1/src/adlmidi.cpp
++++ b/libADLMIDI-1.6.2.1/src/adlmidi.cpp
+@@ -1333,6 +1333,28 @@
+     return marker;
+ }
+ 
++void adl_hookOPL2Set(ADL_ChipWriteHook hook, void *userData);
++unsigned long adl_hookOPL2Frame();
++
++ADLMIDI_EXPORT void adl_setChipWriteHook(ADL_ChipWriteHook chipWriteHook, void *userData)
++{
++#ifndef ADLMIDI_DISABLE_DOSBOX_EMULATOR
++    adl_hookOPL2Set(chipWriteHook, userData);
++#else
++    (void)chipWriteHook;
++    (void)userData;
++#endif
++}
++
++ADLMIDI_EXPORT unsigned long adl_chipFrame(void)
++{
++#ifndef ADLMIDI_DISABLE_DOSBOX_EMULATOR
++    return adl_hookOPL2Frame();
++#else
++    return 0;
++#endif
++}
++
+ ADLMIDI_EXPORT void adl_setRawEventHook(struct ADL_MIDIPlayer *device, ADL_RawEventHook rawEventHook, void *userData)
+ {
+ #ifndef ADLMIDI_DISABLE_MIDI_SEQUENCER
+diff -ruN a/libADLMIDI-1.6.2.1/src/adlmidi_opl3.cpp b/libADLMIDI-1.6.2.1/src/adlmidi_opl3.cpp
+--- a/libADLMIDI-1.6.2.1/src/adlmidi_opl3.cpp
++++ b/libADLMIDI-1.6.2.1/src/adlmidi_opl3.cpp
+@@ -57,6 +57,7 @@
+ #   ifndef ADLMIDI_DISABLE_DOSBOX_EMULATOR
+ #       include "chips/dosbox_opl3.h"
+ #       include "chips/dosbox_opl2.h"
++#       include "chips/hook_opl2.h"
+ #   endif
+ 
+ // Opal emulator
+@@ -110,6 +111,7 @@
+ #   ifndef ADLMIDI_DISABLE_DOSBOX_EMULATOR
+     | (1u << ADLMIDI_EMU_DOSBOX)
+     | (1u << ADLMIDI_EMU_DOSBOX_OPL2)
++    | (1u << ADLMIDI_EMU_HOOK_OPL2)
+ #   endif
+ 
+ #   ifndef ADLMIDI_DISABLE_OPAL_EMULATOR
+@@ -1157,6 +1159,10 @@
+         case ADLMIDI_EMU_DOSBOX_OPL2:
+             chip = new DosBoxOPL2;
+             break;
++
++        case ADLMIDI_EMU_HOOK_OPL2:
++            chip = new HookOPL2;
++            break;
+ #endif
+ #ifndef ADLMIDI_DISABLE_OPAL_EMULATOR
+         case ADLMIDI_EMU_OPAL:
+diff -ruN a/libADLMIDI-1.6.2.1/src/chips/hook_opl2.cpp b/libADLMIDI-1.6.2.1/src/chips/hook_opl2.cpp
+--- a/libADLMIDI-1.6.2.1/src/chips/hook_opl2.cpp
++++ b/libADLMIDI-1.6.2.1/src/chips/hook_opl2.cpp
+@@ -0,0 +1,69 @@
++/*
++ * An OPL2 whose register writes go to a hook, see hook_opl2.h
++ *
++ * This library is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU Lesser General Public
++ * License as published by the Free Software Foundation; either
++ * version 2.1 of the License, or (at your option) any later version.
++ */
++
++#include "hook_opl2.h"
++#include "../../include/adlmidi.h"
++#include <cstring>
++
++// One player at a time: the hook and the frames made so far are the library's
++static ADL_ChipWriteHook s_hook;
++static void *s_hookUserData;
++static unsigned long s_frame;
++
++void adl_hookOPL2Set(ADL_ChipWriteHook hook, void *userData)
++{
++    s_hook = hook;
++    s_hookUserData = userData;
++}
++
++unsigned long adl_hookOPL2Frame()
++{
++    return s_frame;
++}
++
++void HookOPL2::writeReg(uint16_t addr, uint8_t data)
++{
++    // an OPL2 has the first register set only
++    if(s_hook && addr < 0x100)
++        s_hook(s_hookUserData, addr, data, s_frame);
++}
++
++void HookOPL2::nativeGenerate(int16_t *frame)
++{
++    frame[0] = frame[1] = 0;
++    ++s_frame;
++}
++
++void HookOPL2::resampledGenerate(int32_t *frame)
++{
++    frame[0] = frame[1] = 0;
++    ++s_frame;
++}
++
++void HookOPL2::generate(int16_t *output, size_t frames)
++{
++    std::memset(output, 0, frames * 2 * sizeof(*output));
++    s_frame += frames;
++}
++
++void HookOPL2::generateAndMix(int16_t *, size_t frames)
++{
++    s_frame += frames;
++}
++
++void HookOPL2::generate32(int32_t *output, size_t frames)
++{
++    std::memset(output, 0, frames * 2 * sizeof(*output));
++    s_frame += frames;
++}
++
++void HookOPL2::generateAndMix32(int32_t *, size_t frames)
++{
++    s_frame += frames;
++}
+diff -ruN a/libADLMIDI-1.6.2.1/src/chips/hook_opl2.h b/libADLMIDI-1.6.2.1/src/chips/hook_opl2.h
+--- a/libADLMIDI-1.6.2.1/src/chips/hook_opl2.h
++++ b/libADLMIDI-1.6.2.1/src/chips/hook_opl2.h
+@@ -0,0 +1,47 @@
++/*
++ * An OPL2 that is no emulator: its register writes go to a hook, for a real
++ * chip elsewhere (the FM chip of a MiSTer hybrid core), each with the output
++ * frame it is made at. It makes silence.
++ *
++ * This library is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU Lesser General Public
++ * License as published by the Free Software Foundation; either
++ * version 2.1 of the License, or (at your option) any later version.
++ */
++
++#ifndef HOOK_OPL2_H
++#define HOOK_OPL2_H
++
++#include "opl_chip_base.h"
++
++class HookOPL2 final : public OPLChipBase
++{
++    uint32_t m_pcmRate;
++public:
++    HookOPL2() : m_pcmRate(44100) {}
++    ~HookOPL2() override {}
++
++    bool canRunAtPcmRate() const override { return true; }
++    bool isRunningAtPcmRate() const override { return true; }
++    bool setRunningAtPcmRate(bool r) override { return r; }
++#if defined(ADLMIDI_AUDIO_TICK_HANDLER)
++    void setAudioTickHandlerInstance(void *) override {}
++#endif
++    void setRate(uint32_t rate) override { m_pcmRate = rate; }
++    uint32_t effectiveRate() const override { return m_pcmRate; }
++    void reset() override {}
++    void writeReg(uint16_t addr, uint8_t data) override;
++    void nativePreGenerate() override {}
++    void nativePostGenerate() override {}
++    void nativeGenerate(int16_t *frame) override;
++    void resampledGenerate(int32_t *frame) override;
++    void generate(int16_t *output, size_t frames) override;
++    void generateAndMix(int16_t *output, size_t frames) override;
++    void generate32(int32_t *output, size_t frames) override;
++    void generateAndMix32(int32_t *output, size_t frames) override;
++    const char *emulatorName() override { return "Hook OPL2"; }
++    ChipType chipType() override { return CHIPTYPE_OPL2; }
++    bool hasFullPanning() override { return false; }
++};
++
++#endif // HOOK_OPL2_H

@@ -1,19 +1,27 @@
 #!/bin/bash
 #
-# DXXRebirth (Descent and Descent II) launcher. danik_hybrid_cores (Scripts/danik_hybrid_cores.sh)
-# runs it when the DXXRebirth core is loaded and stops it, with SIGTERM to the
-# process group, when another core is loaded.
+# DXXRebirth (Descent and Descent II) launcher. danik_hybrid_ports (Scripts/danik_hybrid_ports.sh)
+# runs it when the DXXRebirth core is loaded (also with a game's set name, from
+# its menu entry: MISTER_HYBRID_SET, which the game reads) and stops it, with
+# SIGTERM to the process group, when another core is loaded.
 #
 # Laid out after the per-core handlers of MiSTer Frontier by MiSTer Organize
 # (https://github.com/MiSTerOrganize/MiSTer_Frontier, GPL-3.0), with thanks
 # for the inspiration. Licensed under the GPL-3.0.
 
 CORE="DXXRebirth"
-GAMEDIR="/media/fat/games/$CORE"
-LOGDIR="/media/fat/logs/$CORE"
+GAMEDIR="/media/fat/games/dnk/$CORE"
+LOGDIR="/media/fat/logs/dnk/$CORE"
 LOG="$LOGDIR/dxxrebirth.log"
+# The game's data, settings and saved games: games/dnk/DXXRebirth/ on a USB drive
+# if the player put the folder there (the first of usb0..usb7 that has it,
+# as Main_MiSTer looks for a core's games there before the SD card), else on
+# the SD card. The game runs in that folder. Its programs stay in GAMEDIR on
+# the SD card, where Downloader installs them: USB drives are mounted noexec.
+DATADIR=$(for d in /media/usb[0-7]/games/dnk/"$CORE" "$GAMEDIR"; do [ -d "$d" ] && { echo "$d"; break; }; done)
 
-cd "$GAMEDIR" || exit 1
+cd "$DATADIR" || exit 1
+# GAME: the settings, pilots, saved games and missions of each game
 mkdir -p "$LOGDIR" descent descent2
 
 # Only once
@@ -27,21 +35,32 @@ flock -n 9 || exit 0
 sleep 1
 
 mv -f "$LOG" "$LOGDIR/dxxrebirth.prev.log" 2>/dev/null
+echo "Game data in $DATADIR" > "$LOG"
+
+# What the game prints is kept in memory while it runs and goes to the log on
+# the SD card when it has left. The card is mounted "sync": a line printed
+# straight to it is a write that waits for the card, about 9ms in which the
+# game stands still. (A game that is still running when the MiSTer is
+# switched off leaves no log of that run.)
+RUNLOG=/tmp/dxxrebirth.log
+: > "$RUNLOG"
+savelog() {
+    cat "$RUNLOG" >> "$LOG" 2>/dev/null
+    : > "$RUNLOG"
+}
 
 # For the hybrid core drivers in the binary: which core to attach to and its
 # default button mapping ("jn" in core/DXXRebirth.sv)
 export MISTER_HYBRID_CORE="$CORE"
 export MISTER_HYBRID_JN="Y,X,B,A,L,R,Select,Start"
-# GAME: the data of Descent and Descent II, in folders of their own
-export DXX_D1_DATA="/media/fat/games/d1x-rebirth"
-export DXX_D2_DATA="/media/fat/games/d2x-rebirth"
-# Everything the games write (settings, pilots, saved games, demos) stays in
-# the core's folder, one folder for each game
-export HOME="$GAMEDIR"
-export D1X_REBIRTH_HOME="$GAMEDIR/descent"
-export D2X_REBIRTH_HOME="$GAMEDIR/descent2"
-export DXX_LAST_GAME="$GAMEDIR/last_game"
-# libADLMIDI.so (the music) is next to the binaries
+# Everything the game writes stays in its folder
+export HOME="$DATADIR"
+export XDG_CONFIG_HOME="$DATADIR/config"
+export XDG_DATA_HOME="$DATADIR/config"
+# GAME: what each game writes, in a folder of its own (missions too)
+export D1X_REBIRTH_HOME="$DATADIR/descent"
+export D2X_REBIRTH_HOME="$DATADIR/descent2"
+# the music library, loaded by the games at run time
 export LD_LIBRARY_PATH="$GAMEDIR"
 
 # Both CPUs: the game takes CPU0 (better DDR3 bandwidth, Main_MiSTer lives on
@@ -54,14 +73,15 @@ export LD_LIBRARY_PATH="$GAMEDIR"
 # another core after all.
 GAME=
 # The game must not outlive us: on SIGTERM it saves its settings and quits
-trap '[ -n "$GAME" ] && kill "$GAME" 2>/dev/null; exit 0' TERM INT
+trap '[ -n "$GAME" ] && kill "$GAME" 2>/dev/null && wait "$GAME"; savelog; exit 0' TERM INT
 while :; do
-    # GAME: DXXRebirth shows the list of games if both have their data, then
-    # becomes d1x-rebirth or d2x-rebirth
-    nice -n -20 taskset 0x03 ./DXXRebirth >> "$LOG" 2>&1 &
+    # GAME: DXXRebirth picks the game (MH_PickGame()) and becomes d1x-rebirth
+    # or d2x-rebirth, with the data in the current folder (DATADIR)
+    nice -n -20 taskset 0x03 "$GAMEDIR/DXXRebirth" >> "$RUNLOG" 2>&1 &
     GAME=$!
     wait "$GAME"
     RC=$?
+    savelog
     if [ $RC -eq 43 ]; then
         sleep 1
         grep -q "^$CORE" /tmp/CORENAME 2>/dev/null || break
@@ -71,7 +91,14 @@ while :; do
 done
 GAME=
 
-# Back to the MiSTer menu, unless another core was loaded meanwhile
+# Unless another core was loaded meanwhile: a game that left with an error
+# (one that crashed: 128 + the signal) and put no message up says so on the
+# core's picture (./mh_message, host version 13), and a message stays there
+# until the player leaves the core. Else back to the MiSTer menu.
 if grep -q "^$CORE" /tmp/CORENAME 2>/dev/null; then
-    echo "load_core /media/fat/menu.rbf" > /dev/MiSTer_cmd
+    if [ $RC -ne 0 ] && ! "$GAMEDIR/mh_message" --shown >> "$LOG" 2>&1; then
+        "$GAMEDIR/mh_message" --error "The game stopped unexpectedly (exit code $RC).\nIts log: ${LOG#/media/fat/}" >> "$LOG" 2>&1
+        sleep 0.1
+    fi
+    "$GAMEDIR/mh_message" --shown >> "$LOG" 2>&1 || echo "load_core /media/fat/menu.rbf" > /dev/MiSTer_cmd
 fi
