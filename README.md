@@ -1,3 +1,5 @@
+<p align="center"><img src="docs/banner.png" alt="Descent" width="100%"></p>
+
 # DXXRebirth for MiSTer
 
 Descent and Descent II on [MiSTer FPGA](https://github.com/MiSTer-devel/Main_MiSTer/wiki) as a hybrid port.
@@ -5,13 +7,19 @@ Descent and Descent II on [MiSTer FPGA](https://github.com/MiSTer-devel/Main_MiS
 The games themselves are [DXX-Rebirth](https://www.dxx-rebirth.com/) (D1X-Rebirth and D2X-Rebirth), the source port of the Descent and Descent II engines, with its software renderer. They run on the MiSTer's ARM CPU. The DXXRebirth FPGA core provides native 15kHz video (CRT, VGA and HDMI) at 320x200 or 320x240, 44.1kHz audio, the music on its FM chip or MIDI synthesizer, and keyboard, mouse and gamepad input with rumble. The two halves talk through shared DDR3 memory.
 
 > **Beta.** Expect rough edges and please report problems in the issues.
+>
+> **Disclaimer:** AI is being extensively used to speed up development, but the project is well-maintained and supported.
 
-Disclaimer: AI is being used to speed up development of this project.
+<p align="center">
+  <img src="docs/screenshot1.png" alt="Descent, the title screen" width="49%">
+  <img src="docs/screenshot2.png" alt="Descent, the first level" width="49%">
+</p>
 
 ## Requirements
 
-- **danik_hybrid_ports**, the launcher (`Scripts/danik_hybrid_ports.sh`): run it **once** from the MiSTer's `Scripts` menu. It starts the game whenever its menu entry is loaded, keeps running after a reboot, and serves all our hybrid ports; its screen picks which ports and games to have, and can keep them up to date through `update_all`. It replaces `danik_hybrid_cores`, the launcher before it, and moves ports installed the old way into the new folders by itself. Without it the core says "Game not running".
+- **danik_hybrid_ports**, the launcher (`Scripts/danik_hybrid_ports.sh`): run it **once** from the MiSTer's `Scripts` menu. It starts the game whenever its menu entry is loaded, keeps running after a reboot, and serves all our hybrid ports; its screen picks which ports and games to have, and can keep them up to date through `update_all`. Without it the core says "Game not running".
 - **Game data**, which is not included: your own copy of Descent and/or Descent II (the versions sold by GOG and Steam work), or the free shareware and demo versions. One of the two games is enough.
+- **Recommended:** a gamepad with two analog sticks and analog triggers, like an Xbox or PlayStation controller. A gamepad without them works but is not recommended. The game can also be played with a keyboard and mouse.
 
 ## Installation
 
@@ -20,17 +28,7 @@ With `update_all` (Downloader 2.4 or newer, which update_all keeps up to date):
 1. Copy [`downloader_danik_hybrid_ports.ini`](https://raw.githubusercontent.com/ItsDanik/Hybrid_MiSTer/main/launcher/downloader_danik_hybrid_ports.ini) to the root of your SD card (`/media/fat`).
 2. Run `update_all`. That installs the launcher, **danik_hybrid_ports**, in `Scripts`.
 3. Run **danik_hybrid_ports** from the `Scripts` menu, tick the games you want and press *X: Apply*. They are installed, and update_all keeps them up to date.
-
-By hand:
-
-1. Download the newest `DXXRebirth_YYYYMMDD.zip` from [releases](releases/) and extract it to the root of your SD card (`/media/fat`). That gives you:
-   - `_Other/dnk-Descent.mgl` and `_Other/dnk-Descent II.mgl`, the games' entries in the `Other` menu
-   - `_Other/dnk/dnk-DXXRebirth_YYYYMMDD.rbf`, the FPGA core
-   - `games/dnk/DXXRebirth/`, the game binaries and their launch script
-   - `games/dnk/SoundFonts/`, the SoundFont of the core's MIDI synthesizer
-   - `Scripts/danik_hybrid_ports.sh`, the launcher (from [Hybrid_MiSTer](https://github.com/ItsDanik/Hybrid_MiSTer))
-   - `downloader_danik_hybrid_ports.ini`, with which `update_all` keeps the ports up to date from then on
-2. Copy the game data to `/media/fat/games/dnk/DXXRebirth/`: everything in the folder of your Descent, of your Descent II, or of both, into that one folder. Among the files are:
+4. Copy **everything** in the folder of your Descent, of your Descent II, or of both, to `/media/fat/games/dnk/DXXRebirth/`, all the files as they are, into that one folder. Each game is known by its files:
 
    | Game | Files |
    |---|---|
@@ -39,14 +37,12 @@ By hand:
    | Descent II demo | `d2demo.hog`, `d2demo.ham`, `d2demo.pig` |
 
    The shareware version of Descent has the same two file names as the full game. Of the Descent II movies the low resolution ones (`-l.mvl`) are the size of the screen; if only the high resolution ones (`-h.mvl`) are there, they are scaled down. Missions (`.hog` with `.msn` or `.mn2`) go into `games/dnk/DXXRebirth/descent/missions/` (Descent) and `descent2/missions/` (Descent II).
-3. Run **danik_hybrid_ports** from the `Scripts` menu, if you have not done so before (see Requirements).
-4. Load **dnk-Descent** or **dnk-Descent II** from the `Other` menu.
+5. Load the game from the `Other` menu, e.g. **dnk-Descent**.
 
-The game data can go on a USB drive instead, into the same folder there (`/media/usb0/games/dnk/DXXRebirth/`): the game looks for it there first, and then keeps its settings and saved games there as well. Everything else stays on the SD card.
+> [!NOTE]
+> The game data can go on a USB drive instead, into the same folder there (`/media/usb0/games/dnk/DXXRebirth/`): the game looks for it there first, and then keeps its settings and saved games there as well. Everything else stays on the SD card.
 
 Loaded by itself (`_Other/dnk/`), the core shows a list of the games whose data is there. Pilots, settings, saved games and demos are in `games/dnk/DXXRebirth/descent/` and `descent2/`. The log is in `/media/fat/logs/dnk/DXXRebirth/dxxrebirth.log`.
-
-The data of the first versions of this port, in `games/d1x-rebirth/` and `games/d2x-rebirth/`, is moved into the new folders by the launcher.
 
 ## OSD options
 
@@ -54,15 +50,15 @@ The data of the first versions of this port, in `games/d1x-rebirth/` and `games/
 |---|---|
 | Aspect ratio, Scale, Scandoubler Fx, Stereo Mix | as in other cores |
 | FPS Counter | shows the pictures per second in the top left corner |
-| HDMI Only | **Yes** if no CRT is connected: resolutions of 640x400 and more are then progressive instead of interlaced, and the analog output is switched off while one is shown, so that a 15kHz screen can never get such a signal. Nothing changes at lower resolutions. Not needed with `forced_scandoubler=1` (VGA monitor); not there with `direct_video=1` |
-| CRT Options | for a 15kHz screen: *Horizontal Size*, *Horizontal Pos* and *Vertical Pos* fit the picture to it. The pixels stay as they are; HDMI is not affected. The size is for the game's picture: the core's own, with its messages, keeps its width. Not there with `forced_scandoubler=1`. *HUD (Top)* and *HUD (Bottom)*: in 320x240, how far the HUD is from the top and the bottom edge of the screen, to keep it out of a CRT's overscan |
-| Sound Volume, Music Volume | on top of the volumes in the game's own *Sound effects & music* options |
-| Resolution | **320x200**, the games' own, or **320x240**: the view fills all 240 lines from edge to edge, with the cockpit, the status bar and the HUD drawn over it at the HUD margins. Menus, briefings and movies stay 320x200 in the middle |
-| Music | **MIDI**: the music is played by an MT32-pi when one is connected and on, else by the core's MIDI synthesizer with the SoundFont below. **FM chip**: by the core's OPL2, as on a Sound Blaster |
-| SoundFont | the synthesizer's SoundFont: *Default* (GeneralUser GS, which comes with the port) or one of your own, 1 to 7: the `.sf2` files in `games/dnk/SoundFonts/`, in the order of their names |
+| HDMI Only | as in the other hybrid ports, for resolutions of 640x400 and more: DXXRebirth has none, so nothing changes here |
+| CRT Options | **Horizontal Size**: the picture's width<br>**Horizontal Pos**: moves it left or right<br>**Vertical Pos**: moves it up or down<br>**HUD (Top)**: moves the HUD's top lines 0 to 24 lines down from the top edge (default 0), at 240 lines<br>**HUD (Bottom)**: lifts the cockpit, the status bar and the HUD's bottom lines 0 to 24 lines off the bottom edge (default 0), at 240 lines<br><br>For a 15kHz screen: fits the picture to it and keeps the HUD out of the overscan. HDMI is not affected; not there with `forced_scandoubler=1` |
+| Sound Volume, Music Volume | **Sound Volume**: the sound effects, 0% to 100% (default 100%)<br>**Music Volume**: the music, 0% to 100% (default 100%)<br><br>On top of the volumes in the game's own *Sound effects & music* options |
+| Resolution | **320x200**: the games' own (default)<br>**320x240**: the view fills the whole screen<br><br>With 240 lines the cockpit, the status bar and the HUD are drawn over the view at the HUD margins; menus, briefings and movies stay 320x200, centred |
+| Music | **MIDI**: an MT32-pi when one is connected and on, else the core's MIDI synthesizer (default)<br>**FM chip**: the core's OPL2, as on a Sound Blaster |
+| SoundFont | **Default**: GeneralUser GS, which comes with the port<br>**1 to 7**: your own `.sf2` files in `games/dnk/SoundFonts/`, in the order of their names<br><br>The SoundFont of the core's MIDI synthesizer |
 | MT32-pi | only while one is connected: on or off, its synth, ROM and SoundFont |
-| Rumble | the controller rumbles when the ship is hit, fires, hits a wall or explodes, while the fusion cannon charges and while the mine shakes |
-| Cheats | the games' own cheats, for one player: *Invulnerability*, *Robots Don't Fire*, *Rapid Fire*, *Ghost (No Clipping)*, *Turbo*, and in Descent II *Homing Weapons*, *Bouncy Weapons*, *Robots Kill Robots*; *Give All* (all weapons and keys, full shields and energy; in Descent II the accessories too), *Kill Reactor*, *Next Level*, *Exit Path*. As with the typed cheats, the score goes to 0 |
+| Rumble | **On**: the controller rumbles when the ship is hit, fires, hits a wall or explodes, while the fusion cannon charges and while the mine shakes (default)<br>**Off**: no rumble |
+| Cheats | **Invulnerability**: nothing hurts you<br>**Robots Don't Fire**: robots hold their fire<br>**Rapid Fire**: weapons fire faster<br>**Ghost (No Clipping)**: fly through walls<br>**Turbo**: the ship flies faster<br>**Homing Weapons**: every shot homes in (Descent II)<br>**Bouncy Weapons**: shots bounce off walls (Descent II)<br>**Robots Kill Robots**: robots fight each other (Descent II)<br>**Give All**: all weapons and keys, full shields and energy<br>**Kill Reactor**: destroys the reactor<br>**Next Level**: completes the level<br>**Exit Path**: shows the way to the exit<br><br>The games' own cheats, for one player. As with the typed cheats, the score goes to 0 |
 | Save Diagnostic Report | the last line: see [If something is wrong](#if-something-is-wrong) |
 
 ## Controls
@@ -91,8 +87,6 @@ The data of the first versions of this port, in `games/d1x-rebirth/` and `games/
 | F3 | Cockpit, status bar or full screen view |
 | F1 | Help: all keys |
 
-All of them can be changed in the game under *Options*, *Controls*.
-
 - **Gamepad** (default mapping):
 
 | Button | Action |
@@ -110,60 +104,24 @@ All of them can be changed in the game under *Options*, *Controls*.
 | Select | Rear view |
 | Start | Game menu: automap, options, save, load, abort. Closes the automap and the menus too |
 
-In the game's menus the buttons that confirm and go back are the ones of your MiSTer menu, whatever they do in the game: its *Menu OK* / *Menu Back* if you set them in *Define joystick buttons*, else its A / B. A controller never set up in MiSTer confirms and goes back as on its console: Cross / Circle on PlayStation, A / B on Xbox and on Nintendo. They also skip a movie, as Start does.
-
-Nothing needs a keyboard. Where the game asks for text (the name of a pilot, the description of a saved game), the D-pad types: up and down change the last character, right adds one, left removes one. A game saved without a description gets the date and time.
-
-The actions of the buttons can also be changed in the game under *Options*, *Controls*, *Customize joystick*; there, Select clears a binding and holding Start resets all of them.
-
 Change the buttons in the OSD under *Define DXXRebirth buttons*. *Menu OK* and *Menu Back* there are only needed for a spare button without a game function. While the OSD is open, the game gets no input.
 
-## Building
+> [!WARNING]
+> A button left without a name in *Define DXXRebirth buttons* does not reach the game at all, except L2/R2, L3/R3 and *Menu OK* / *Menu Back*. Name every button there, or leave the definition as it is. To go back to the default buttons, delete `config/inputs/DXXRebirth_*_input_*_v3.map` (each game has its own) on the SD card.
 
-Everything builds in Docker on a Linux PC.
+The game's own menu can change what each gamepad button does: *Options*, *Controls*, *Customize joystick* (there, Select clears a binding and holding Start resets all of them). Change the actions there rather than in the OSD; a button the OSD leaves without a name never reaches the game, so its menu cannot bind it.
 
-```sh
-git clone --recursive https://github.com/ItsDanik/DXXRebirth_MiSTer.git
-cd DXXRebirth_MiSTer
-./build.sh              # ARM game binaries -> build/mister/
-./core/build_core.sh    # FPGA core (Quartus Lite 17.0.2) -> core/output_files/DXXRebirth.rbf
-./package.sh            # release zip      -> dist/DXXRebirth_YYYYMMDD.zip
-```
-
-The toolchain image (Debian bullseye, glibc 2.31 to match the MiSTer) is built from `hybrid/toolchain/` on first use. DXX-Rebirth needs a newer compiler (gcc 14) and Python than that image has, so a second image is built from `toolchain/`: it has a gcc 14 cross compiler built against the same glibc 2.31, which takes a while the first time. The first build also downloads and builds SDL2, SDL2_mixer and SDL2_net (`hybrid/sdl2/build.sh`), PhysFS, SDL2_image and libADLMIDI (`tools/deps.sh`, which patches libADLMIDI so that its OPL2's register writes can go to the core's FM chip: `tools/libadlmidi-mister.patch`).
-
-### Repository layout
-
-| Path | |
-|---|---|
-| `hybrid/` | submodule: [ItsDanik/Hybrid_MiSTer](https://github.com/ItsDanik/Hybrid_MiSTer), what all our hybrid ports share: the FPGA host module, the ARM side library, SDL2 drivers, the launcher (`danik_hybrid_ports.sh`), toolchain and conventions. See its README. |
-| `core/` | FPGA core, based on [Template_MiSTer](https://github.com/MiSTer-devel/Template_MiSTer): `DXXRebirth.sv` (OSD and button names) around `hybrid/rtl/hybrid_host.sv` |
-| `dxxrebirth/` | submodule: the game, branch `mister`, with the MiSTer changes (SCons option `mister_hybrid=1`) and the software renderer on SDL2 |
-| `src/dxxrebirth.c` | `DXXRebirth`, the program the launcher starts: picks the game (the menu entry's, or from the list), then becomes `d1x-rebirth` or `d2x-rebirth` |
-| `toolchain/` | Docker image with gcc 14 for the MiSTer |
-| `tools/deps.sh` | builds PhysFS, SDL2_image and libADLMIDI |
-| `package/` | files shipped in the release next to the binaries (`danik_hybrid_launch.sh`, README), `games.txt`: the games and their menu entries, and `logos/`: each game's logo |
-| `releases/` | release packages |
-
-### Development notes
-
-- `./build.sh host` builds the same games for the PC. They run against `hybrid/tools/fakecore`, a stand-in for the FPGA core that takes scripted input and saves screenshots and audio:
-  ```sh
-  gcc -O2 -o build/host/fakecore hybrid/tools/fakecore.c -lm
-  build/host/fakecore /tmp/shm script.txt audio.raw &
-  MISTER_HYBRID_SHM=/tmp/shm LD_LIBRARY_PATH=build/host D1X_REBIRTH_HOME=/tmp/d1 \
-      build/host/d1x-rebirth/d1x-rebirth -hogdir <data folder>
-  ```
-- The ARM binaries run on the PC under `qemu-arm` too (with the toolchain image's `/opt/mister-sysroot` as `QEMU_LD_PREFIX`), against the same fakecore. That is how the compiler bug named in `build.sh` was found.
-- `MISTER=root@<address> tools/test_on_mister.sh <d1|d2>` tries the build on a MiSTer next to what is installed there, without installing it: from `/tmp`, with the installed game's folder mirrored there (what the game writes stays in `/tmp`) and its own OSD settings. `list` and `nodata` for the core started by itself and without data, `log` for the game's log, `stop` to remove all of it again.
-- `MISTER_HYBRID_STATS=1` in the environment of the game (`danik_hybrid_launch.sh`) puts frame and audio timing in the log: fields per frame, time per frame, every late frame. `hybrid/tools/fbmon.c` watches from outside whether every field got a new frame.
-- `touch /tmp/dxxrebirth_nolaunch` on the MiSTer keeps the core loaded without starting the game, so you can start a development binary by hand (set `MISTER_HYBRID_CORE=DXXRebirth`, and `MISTER_HYBRID_SET` for a game's set name). `/tmp/danik_hybrid_ports.log` shows what the launcher daemon did.
+Naming a pilot or a saved game without a keyboard: up/down changes the last character, right adds one, left removes one. A game saved without a description gets the date and time.
 
 ## If something is wrong
 
 If the game stutters, the sound breaks up or something else is wrong, open the OSD while it happens and pick **Save Diagnostic Report**, the last line of the menu. The game keeps running; MiSTer's info box says the report is saved in `games/dnk/diagnostics/` on the SD card. Send that file (`DXXRebirth_<date>_<time>.zip`) with a few words on what went wrong.
 
 The report has the setup (versions, the video and audio lines of `MiSTer.ini`, the OSD settings), how the last 60 seconds went, the game's log and a screenshot. Nothing else: no network settings, addresses, saved games or lists of your files.
+
+## Building
+
+How the port works, how to build it and notes for development: [NOTES.md](NOTES.md).
 
 ## Support
 
@@ -176,10 +134,10 @@ If you enjoy this project, you can support my work on [Patreon](https://www.patr
 - **[SDL](https://libsdl.org)** by Sam Lantinga and contributors.
 - **[GeneralUser GS](https://www.schristiancollins.com/generaluser.php)** by S. Christian Collins: the SoundFont of the core's MIDI synthesizer, which comes with the port, its licence next to it.
 - **[MiSTer](https://github.com/MiSTer-devel)** by Sorgelig and the MiSTer-devel contributors: the framework and Template_MiSTer.
-- **[MiSTer Frontier](https://github.com/MiSTerOrganize/MiSTer_Frontier)** by MiSTer Organize: thank you for the inspiration. Hybrid cores on the MiSTer, and the way their game is launched (a daemon that watches the loaded core and runs a script from its games folder), come from MiSTer Frontier. Our launcher is a separate implementation and does not need MiSTer Frontier installed.
+- **[MiSTer Frontier](https://github.com/MiSTerOrganize/MiSTer_Frontier)** by MiSTer Organize: thank you for the inspiration. Hybrid cores on the MiSTer, and the way their game is launched (a daemon that watches the loaded core and runs a script from its games folder), were inspired by MiSTer Frontier.
 
 This project and its maintainers are in no way associated with or endorsed by Parallax Software, Interplay Entertainment or the DXX-Rebirth project. It does not include any game data.
 
 ## License
 
-The top-level scripts, tools and documentation are licensed under the [GPL-3.0](LICENSE). The components keep their own licenses: the shared framework in `hybrid/` is GPL-3.0 except where its files say otherwise, DXX-Rebirth is under its own license (`dxxrebirth/COPYING.txt`: the Parallax license for the original source, GPL-3.0 for what was added since), PhysFS and SDL_image are zlib, libADLMIDI is LGPL-3.0, SDL and the SDL drivers in `hybrid/sdl2` are zlib, the FPGA core and the MiSTer framework are GPL-2.0 (`core/LICENSE`, with the core's own sources GPL-2.0-or-later).
+The top-level scripts, tools and documentation are licensed under the [GPL-3.0](LICENSE). The components keep their own licenses: the part of the shared framework the game is linked with (`hybrid/hps/`) is GPL-2.0-or-later, the rest of `hybrid/` GPL-3.0 except where its files say otherwise, DXX-Rebirth is under its own license (`dxxrebirth/COPYING.txt`: the Parallax license for the original source, GPL-3.0 for what was added since), PhysFS and SDL_image are zlib, libADLMIDI is LGPL-3.0, SDL and the SDL drivers in `hybrid/sdl2` are zlib, the FPGA core and the MiSTer framework are GPL-2.0 (`core/LICENSE`, with the core's own sources GPL-2.0-or-later).
