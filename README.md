@@ -37,7 +37,7 @@ With `update_all` (Downloader 2.4 or newer, which update_all keeps up to date):
    | Descent II demo | `d2demo.hog`, `d2demo.ham`, `d2demo.pig` |
 
    The shareware version of Descent has the same two file names as the full game. Of the Descent II movies the low resolution ones (`-l.mvl`) are the size of the screen; if only the high resolution ones (`-h.mvl`) are there, they are scaled down. Missions (`.hog` with `.msn` or `.mn2`) go into `games/dnk/DXXRebirth/descent/missions/` (Descent) and `descent2/missions/` (Descent II).
-5. Load the game from the `Other` menu, e.g. **dnk-Descent**.
+5. Load the game from the `Other` menu, e.g. **dnk-Descent**, or from the `Hybrid Ports` folder if you moved the games there in the launcher.
 
 > [!NOTE]
 > The game data can go on a USB drive instead, into the same folder there (`/media/usb0/games/dnk/DXXRebirth/`): the game looks for it there first, and then keeps its settings and saved games there as well. Everything else stays on the SD card.
