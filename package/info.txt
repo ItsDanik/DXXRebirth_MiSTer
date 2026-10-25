@@ -1,0 +1,5 @@
+# The games of package/games.txt for dnkLauncher, the frontend (hybrid/docs/dnklauncher.md),
+# a line each: <id>|<year>|<developer>|<description>. The description is shown on the
+# game's Details page, at most 4 lines there (about 340 characters).
+d1|1995|Parallax Software|Not a corridor shooter but a ship in a mine: fly in every direction through the robot-infested mines of the solar system, from the Moon to Pluto. Rescue the hostages, destroy each mine's reactor and find the exit before it blows.
+d2|1996|Parallax Software|The pilot is taken beyond the solar system to mines on alien worlds, where the robots have grown smarter: thieves that steal weapons, and a Guide-Bot that shows the way. New weapons, an afterburner, a headlight, and mines that fall apart as the clock runs down.
