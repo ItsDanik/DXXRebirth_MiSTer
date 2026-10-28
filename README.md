@@ -69,7 +69,7 @@ Run it from the `Scripts` menu again whenever you want to change something. Its 
 |---|---|
 | Aspect ratio, Scale, Scandoubler Fx, Stereo Mix | as in other cores |
 | FPS Counter | shows the pictures per second in the top left corner |
-| HDMI Only | as in the other hybrid ports, for resolutions of 640x400 and more: DXXRebirth has none, so nothing changes here |
+| HDMI Only | **Yes** if no CRT is connected: resolutions of 640x400 and more are then progressive instead of interlaced, and so is the core's own screen before the game, which moves at 60 pictures a second for a CRT and shows fine lines on HDMI without it. The analog output is switched off while one is shown, so that a 15kHz screen can never get such a signal. DXXRebirth has no such resolution, so nothing changes in the game. Not needed with `forced_scandoubler=1` (VGA monitor); not there with `direct_video=1` |
 | CRT Options | **Horizontal Size**: the picture's width<br>**Horizontal Pos**: moves it left or right<br>**Vertical Pos**: moves it up or down<br>**HUD (Top)**: moves the HUD's top lines 0 to 24 lines down from the top edge (default 0), at 240 lines<br>**HUD (Bottom)**: lifts the cockpit, the status bar and the HUD's bottom lines 0 to 24 lines off the bottom edge (default 0), at 240 lines<br><br>For a 15kHz screen: fits the picture to it and keeps the HUD out of the overscan. HDMI is not affected; not there with `forced_scandoubler=1` |
 | Sound Volume, Music Volume | **Sound Volume**: the sound effects, 0% to 100% (default 100%)<br>**Music Volume**: the music, 0% to 100% (default 100%)<br><br>On top of the volumes in the game's own *Sound effects & music* options |
 | Resolution | **320x200**: the games' own (default)<br>**320x240**: the view fills the whole screen<br><br>With 240 lines the cockpit, the status bar and the HUD are drawn over the view at the HUD margins; menus, briefings and movies stay 320x200, centred |
@@ -78,6 +78,7 @@ Run it from the `Scripts` menu again whenever you want to change something. Its 
 | MT32-pi | only while one is connected: on or off, its synth, ROM and SoundFont |
 | Rumble | **On**: the controller rumbles when the ship is hit, fires, hits a wall or explodes, while the fusion cannon charges and while the mine shakes (default)<br>**Off**: no rumble |
 | Cheats | **Invulnerability**: nothing hurts you<br>**Robots Don't Fire**: robots hold their fire<br>**Rapid Fire**: weapons fire faster<br>**Ghost (No Clipping)**: fly through walls<br>**Turbo**: the ship flies faster<br>**Homing Weapons**: every shot homes in (Descent II)<br>**Bouncy Weapons**: shots bounce off walls (Descent II)<br>**Robots Kill Robots**: robots fight each other (Descent II)<br>**Give All**: all weapons and keys, full shields and energy<br>**Kill Reactor**: destroys the reactor<br>**Next Level**: completes the level<br>**Exit Path**: shows the way to the exit<br><br>The games' own cheats, for one player. As with the typed cheats, the score goes to 0 |
+| Reset | starts the game again from its beginning, as the USER button does |
 | Save Diagnostic Report | the last line: see [If something is wrong](#if-something-is-wrong) |
 
 ## Controls
